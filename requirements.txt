@@ -6,6 +6,9 @@ requests
 pandas
 python-docx
 moviepy
+imageio
+imageio-ffmpeg
+decorator
 pymupdf
 sqlalchemy
 mysql-connector-python
