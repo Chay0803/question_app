@@ -23,13 +23,54 @@ from fastapi import Depends, HTTPException, Security
 from fastapi.security.api_key import APIKeyHeader
 import httpx
 
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "icfai123"
-MYSQL_HOST = "localhost"
-MYSQL_PORT = 3306
-MYSQL_DB = "mcq_db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    MYSQL_USER = os.getenv("MYSQL_USER", "root")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
+    MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+    MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+    MYSQL_DB = os.getenv("MYSQL_DB", "mcq_db")
+    DATABASE_URL = (
+        f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}"
+        f"@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+    )
 
-DATABASE_URL = f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+# API keys
+API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "myportalkey123")
+
+# Optional Whisper model (disabled by default in cloud)
+WHISPER_MODEL = None
+if os.getenv("ENABLE_WHISPER", "false").lower() == "true":
+    try:
+        WHISPER_MODEL = whisper.load_model(os.getenv("WHISPER_SIZE", "small"))
+    except Exception as e:
+        print("⚠️ Whisper model failed to load:", e)
+        WHISPER_MODEL = None
+
+# ======================
+# FastAPI Setup
+# ======================
+
+app = FastAPI()
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # 🔒 Later restrict to your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Serve static frontend (design.html inside ./static)
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+# Health check
+@app.get("/status")
+def status():
+    return {"status": "ok", "db": DATABASE_URL[:25] + "..."}
+    
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -61,7 +102,6 @@ HOST = "127.0.0.1"
 PORT = 8000
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "x-ai/grok-4-fast:free"
-API_KEY = "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"
 
 INTERNAL_API_KEY = "myportalkey123"    
 API_KEY_NAME = "X-API-Key"
