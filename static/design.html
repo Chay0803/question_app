@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI PDF & Video → MCQ Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: url("https://guptadeepak.com/content/images/size/w2000/2024/07/The-Future-of-AI-and-Its-Impact-on-Humanity.webp") no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+    }
+    body::before {
+      content: "";
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.09);
+      backdrop-filter: blur(8px);
+      z-index: -1;
+    }
+
+    header {
+      background: linear-gradient(to right, #0d47a1, #c62828);
+      padding: 10px 20px;
+      color: white;
+      display: none;
+    }
+
+    /* Login Page */
+    #loginPage {
+      height: 100vh; display: flex; justify-content: center; align-items: center;
+    }
+    .login-card {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 40px;
+      width: 380px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 1s ease forwards;
+    }
+    .login-card h3 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #0d47a1;
+      font-weight: 700;
+    }
+    .form-control { border-radius: 8px; border: 1px solid #1976d2; }
+    .btn-login {
+      background: linear-gradient(135deg, #1976d2, #42a5f5);
+      color: #fff; border: none;
+      width: 100%; padding: 12px; border-radius: 10px;
+      font-size: 1.1rem; margin-top: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .btn-login:hover {
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 0 15px rgba(255,255,255,0.6),
+                  0 0 30px rgba(255,255,255,0.4),
+                  0 8px 25px rgba(0,0,0,0.4);
+      filter: brightness(1.1);
+    }
+    #loginError { display:none; text-align:center; margin-top:10px; }
+
+    /* Stats card */
+    .stats-card {
+      border-radius: 12px; padding: 20px; text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(40px);
+      animation: fadeInUp 1s ease forwards; transition: all 0.3s ease;
+      background: linear-gradient(135deg, #1976d2, #42a5f5); color: #fff;
+    }
+    .stats-card:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 0 15px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.4), 0 8px 25px rgba(0,0,0,0.4);
+      filter: brightness(1.2);
+    }
+
+    .section-card {
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border-radius: 12px; padding: 25px; margin-bottom: 40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0; transform: scale(0.9) translateY(40px);
+      animation: fadePop 1s ease forwards; transition: all 0.3s ease;
+    }
+
+    .upload-box {
+      border: 2px dashed #0d47a1; padding: 25px; border-radius: 12px;
+      background: rgba(255,255,255,0.9); text-align: center;
+    }
+
+    footer {
+      background: linear-gradient(to right, #c62828, #0d47a1);
+      color: #fff; padding: 12px; text-align: center; font-size:0.9rem;
+      display: none;
+    }
+
+    @keyframes fadeInUp { from {opacity:0; transform:translateY(40px);} to {opacity:1; transform:translateY(0);} }
+    @keyframes fadePop { from {opacity:0; transform:scale(0.9) translateY(40px);} to {opacity:1; transform:scale(1) translateY(0);} }
+
+    /* Main nav */
+    .main-nav { height:80vh; display:flex; justify-content:center; align-items:center; display:none; }
+    .nav-vertical { display:flex; flex-direction:column; gap:20px; align-items:center; }
+    .nav-vertical .btn {
+      padding: 15px 30px; font-size: 1.1rem; border-radius: 12px;
+      color: #fff; background: linear-gradient(135deg, #1976d2, #42a5f5);
+      border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(40px);
+      animation: fadeInUp 1s ease forwards; transition: all 0.3s ease;
+      width: 400px; text-align: left; padding-left: 20px;
+    }
+    .nav-vertical .btn:hover {
+      transform: translateY(-10px) scale(1.04);
+      box-shadow: 0 0 15px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.4), 0 8px 25px rgba(0,0,0,0.4);
+      filter: brightness(1.12);
+    }
+    .page { display: none; padding-top: 18px; }
+    
+    /* Questions table styles */
+    .question-table {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .question-row {
+      border-left: 4px solid #1976d2;
+    }
+    .question-row.mcq {
+      border-left-color: #28a745;
+    }
+    .question-row.descriptive {
+      border-left-color: #ffc107;
+    }
+    /* Sticky table header */
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;  /* Bootstrap table-light background */
+  z-index: 2;
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="loginPage">
+    <div class="login-card">
+      <h3>🔐 Login</h3>
+      <div class="mb-3"><label class="form-label">Username</label>
+        <input type="text" id="username" class="form-control" placeholder="Enter username"></div>
+      <div class="mb-3"><label class="form-label">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Enter password"></div>
+      <button class="btn-login" onclick="login()">Login</button>
+      <div id="loginError" class="text-danger small">⚠ Invalid username or password</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="d-flex justify-content-between align-items-center" id="mainHeader">
+    <img src="http://icfaionline.in/assets/img/icfai-logo.png" class="p-1" alt="ICFAI Logo" height="60" />
+    <button class="btn btn-light btn-sm" onclick="logout()">Logout</button>
+  </header>
+
+  <!-- NAV -->
+  <div id="mainPage" class="main-nav">
+    <div class="nav-vertical">
+      <button class="btn" data-page="pdfPage">Generate Questions from PDFs</button>
+      <button class="btn" data-page="videoPage">Generate Questions from Video</button>
+      <button class="btn" data-page="questionsPage">View Saved Questions</button>
+      <a class="btn" href="http://192.168.1.76:8501" target="_blank">Multilingual Video Generator</a>
+      <a class="btn" href="http://192.168.1.56/Summarizer/" target="_blank">Text Summarizer</a>
+    </div>
+  </div>
+
+  <!-- PDF PAGE -->
+  <div id="pdfPage" class="page container my-5">
+    <h3 class="step-title"> Generate Questions from PDFs </h3>
+    <div class="row g-3 mb-4">
+      <div class="col-md-3"><div class="stats-card"><h6>PDFs uploaded</h6><h3>0</h3></div></div>
+      <div class="col-md-3"><div class="stats-card"><h6>Pages (current PDF)</h6><h3>0</h3></div></div>
+      <div class="col-md-3"><div class="stats-card"><h6>MCQs generated</h6><h3>0</h3></div></div>
+      <div class="col-md-3"><div class="stats-card"><h6>Descriptive Qs</h6><h3>0</h3></div></div>
+    </div>
+    <div class="section-card">
+      <div class="upload-box">
+        <img src="https://img.icons8.com/ios-filled/70/0d47a1/pdf.png" alt="PDF Upload" class="mb-2"/>
+        <p>Drag and drop file here</p>
+        <p><small>Limit 200MB per file • PDF</small></p>
+        <input id="pdfUploader" type="file" class="form-control form-control-sm btn-upload" accept=".pdf">
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEO PAGE -->
+  <div id="videoPage" class="page container my-5">
+    <h3 class="step-title"> Generate Questions from Video </h3>
+    <div class="row g-3 mb-4">
+      <div class="col-md-3"><div class="stats-card"><h6>Videos uploaded</h6><h3>0</h3></div></div>
+      <div class="col-md-3"><div class="stats-card"><h6>Frames processed</h6><h3>0</h3></div></div>
+      <div class="col-md-3"><div class="stats-card"><h6>MCQs generated</h6><h3>0</h3></div></div>
+      <div class="col-md-3"><div class="stats-card"><h6>Descriptive Qs</h6><h3>0</h3></div></div>
+    </div>
+    <div class="section-card">
+      <div class="upload-box">
+        <img src="https://img.icons8.com/ios-filled/70/c62828/video.png" alt="Video Upload" class="mb-2"/>
+        <p>Drag and drop file here</p>
+        <p><small>Limit 200MB per file • MP4, MOV, MKV, AVI, MPEG4</small></p>
+        <input id="videoUploader" type="file" class="form-control form-control-sm btn-upload" accept="video/*">
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTIONS PAGE -->
+  <div id="questionsPage" class="page container my-5">
+    <h3 class="step-title"> Saved Questions in Database </h3>
+    <div class="section-card">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <input id="searchBox" class="form-control" placeholder="Search by keyword...">
+        </div>
+        <div class="col-md-3">
+          <select id="questionTypeFilter" class="form-control">
+            <option value="">All Types</option>
+            <option value="MCQ">MCQ Only</option>
+            <option value="Descriptive">Descriptive Only</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button id="refreshBtn" class="btn btn-primary w-100">Refresh</button>
+        </div>
+      </div>
+      <div id="questionsCount" class="mb-3"></div>
+      <div id="questionsTable" class="question-table"></div>
+    </div>
+  </div>
+
+  <footer class="mt-4" id="mainFooter">© 2025 ICFAI Group</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Backend + Navigation Scripts -->
+  <script>
+    const backendBase = "http://127.0.0.1:8000";
+
+    function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+
+      const VALID_USER = "admin";
+      const VALID_PASS = "icfai@123";
+
+      if (user === VALID_USER && pass === VALID_PASS) {
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("mainPage").style.display = "flex";
+        document.getElementById("mainHeader").style.display = "flex";
+        document.getElementById("mainFooter").style.display = "block";
+      } else {
+        document.getElementById("loginError").style.display = "block";
+      }
+    }
+
+    function logout() {
+      document.getElementById("mainPage").style.display = "none";
+      document.getElementById("mainHeader").style.display = "none";
+      document.getElementById("mainFooter").style.display = "none";
+      document.getElementById("loginPage").style.display = "flex";
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("loginError").style.display = "none";
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-vertical .btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const pageId = this.getAttribute('data-page');
+        if (pageId) {
+          document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+          document.getElementById(pageId).style.display = 'block';
+          
+          // Load questions when questions page is opened
+          if (pageId === 'questionsPage') {
+            loadQuestionsFromDB();
+          }
+        }
+      });
+    });
+  </script>
+
+  <!-- Questions Page Functionality -->
+  <script>
+    async function loadQuestionsFromDB(searchTerm = '', questionType = '') {
+      const questionsTable = document.getElementById('questionsTable');
+      const questionsCount = document.getElementById('questionsCount');
+      
+      questionsTable.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Loading questions...</p></div>';
+      
+      try {
+        let url = `${backendBase}/questions`;
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('search', searchTerm);
+        if (questionType) params.append('qtype', questionType);
+        
+        if (params.toString()) {
+          url += '?' + params.toString();
+        }
+        
+        const response = await fetch(url);
+        const questions = await response.json();
+        
+        // Update count
+        questionsCount.innerHTML = `<div class="alert alert-info">Found ${questions.length} questions</div>`;
+        
+        if (questions.length === 0) {
+          questionsTable.innerHTML = '<div class="alert alert-warning text-center">No questions found in the database.</div>';
+          return;
+        }
+        
+        // Create table
+        let tableHTML = `
+        <div style="max-height: 500px; overflow-y: auto;">
+          <table class="table table-striped table-hover">
+            <thead class="table-light sticky-top">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Topic</th>
+                  <th>Type</th>
+                  <th>Question</th>
+                  <th>Options/Answer</th>
+                  <th>Difficulty</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+            <tbody>
+        `;
+        
+        questions.forEach(q => {
+          const createdDate = new Date(q.created_at).toLocaleDateString();
+          let optionsHtml = '';
+          
+          if (q.type === 'MCQ') {
+            optionsHtml = `
+              <div><strong>A:</strong> ${q.option_a || ''}</div>
+              <div><strong>B:</strong> ${q.option_b || ''}</div>
+              <div><strong>C:</strong> ${q.option_c || ''}</div>
+              <div><strong>D:</strong> ${q.option_d || ''}</div>
+              <div class="text-success"><strong>Answer:</strong> ${q.answer || ''}</div>
+            `;
+          } else {
+            optionsHtml = `<div class="text-success"><strong>Answer:</strong> ${q.descriptive_answer || 'Not provided'}</div>`;
+          }
+          
+          tableHTML += `
+            <tr class="question-row ${q.type.toLowerCase()}">
+              <td>${q.id}</td>
+              <td>${q.topic || 'N/A'}</td>
+              <td><span class="badge ${q.type === 'MCQ' ? 'bg-success' : 'bg-warning'}">${q.type}</span></td>
+              <td>${q.question}</td>
+              <td>${optionsHtml}</td>
+              <td>${q.difficulty || 'N/A'}</td>
+              <td>${createdDate}</td>
+            </tr>
+          `;
+        });
+        
+        tableHTML += '</tbody></table></div>';
+        questionsTable.innerHTML = tableHTML;
+        
+      } catch (error) {
+        console.error('Error loading questions:', error);
+        questionsTable.innerHTML = '<div class="alert alert-danger">Error loading questions from database.</div>';
+      }
+    }
+
+    // Initialize questions page functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchBox = document.getElementById('searchBox');
+      const questionTypeFilter = document.getElementById('questionTypeFilter');
+      const refreshBtn = document.getElementById('refreshBtn');
+      
+      let searchTimeout;
+      
+      // Search functionality with debounce
+      searchBox.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          loadQuestionsFromDB(this.value, questionTypeFilter.value);
+        }, 500);
+      });
+      
+      // Filter by question type
+      questionTypeFilter.addEventListener('change', function() {
+        loadQuestionsFromDB(searchBox.value, this.value);
+      });
+      
+      // Refresh button
+      refreshBtn.addEventListener('click', function() {
+        loadQuestionsFromDB(searchBox.value, questionTypeFilter.value);
+      });
+    });
+  </script>
+
+  <!-- PDF Logic -->
+  <script>
+    async function uploadAndExtractTOC(file) {
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      const res = await fetch(`${backendBase}/extract_toc`, { method: "POST", body: fd });
+      return res.json();
+    }
+
+    // PDF UI wiring
+    (function initPdf() {
+      const pdfInput = document.querySelector('#pdfPage #pdfUploader');
+      const pdfBox = pdfInput && pdfInput.closest('.upload-box');
+      const statNodes = Array.from(document.querySelectorAll('#pdfPage .stats-card h3') || []);
+
+      function updateDashboardFromResponse(resp) {
+        try {
+          if (!resp) return;
+          if (statNodes[0]) statNodes[0].textContent = (resp.global_state?.pdf_uploads ?? statNodes[0].textContent);
+          if (statNodes[1]) statNodes[1].textContent = (typeof resp.pages === 'number' ? resp.pages : (resp.global_state?.last_pdf_pages ?? statNodes[1].textContent));
+          if (statNodes[2]) statNodes[2].textContent = (typeof resp.mcqCount === 'number') ? resp.mcqCount : statNodes[2].textContent;
+          if (statNodes[3]) statNodes[3].textContent = (typeof resp.descCount === 'number') ? resp.descCount : statNodes[3].textContent;
+        } catch (e) {
+          console.warn("Failed to update dashboard:", e);
+        }
+      }
+
+      if (!pdfInput || !pdfBox) return;
+
+      // Build controls area under upload box
+      const ctrlWrap = document.createElement('div');
+      ctrlWrap.className = 'mt-3';
+      pdfBox.appendChild(ctrlWrap);
+
+      const statusEl = document.createElement('div'); 
+      statusEl.style.marginTop = '8px'; 
+      ctrlWrap.appendChild(statusEl);
+      
+      const tocEl = document.createElement('div'); 
+      tocEl.style.marginTop = '8px'; 
+      ctrlWrap.appendChild(tocEl);
+
+      const optionsForm = document.createElement('div');
+      optionsForm.innerHTML = `
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label class="form-label mb-0">Scope</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="scopeRadio" id="scopeAll" value="all" checked>
+                      <label class="form-check-label small" for="scopeAll">All topics</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="scopeRadio" id="scopeSelected" value="selected">
+                      <label class="form-check-label small" for="scopeSelected">Selected chapters only</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0">MCQ source</label>
+                <div>
+                    <select id="mcqSource" class="form-select form-select-sm">
+                        <option value="llama_open">Llama3 (open-ended)</option>
+                        <option value="textbook">From textbook (use chapter content)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0">Question type</label>
+                <div>
+                    <select id="questionType" class="form-select form-select-sm">
+                        <option value="mcq">MCQs</option>
+                        <option value="descriptive">Descriptive</option>
+                        <option value="both" selected>Both</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0 small">MCQs per topic</label>
+                <input id="numMcqs" type="number" min="1" max="50" value="5" class="form-control form-control-sm" style="width:80px;">
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0 small">Descriptive per topic</label>
+                <input id="numDesc" type="number" min="0" max="20" value="3" class="form-control form-control-sm" style="width:80px;">
+            </div>
+            <div class="col-auto">
+                <button id="generateBtn" class="btn btn-primary btn-sm" style="margin-top:6px; display:none;">Generate MCQs</button>
+            </div>
+        </div>
+      `;
+      ctrlWrap.appendChild(optionsForm);
+
+      const chaptersContainer = document.createElement('div');
+      chaptersContainer.className = 'mt-3';
+      ctrlWrap.appendChild(chaptersContainer);
+
+      const resultsArea = document.createElement('div');
+      resultsArea.className = 'mt-3';
+      pdfBox.appendChild(resultsArea);
+
+      let lastMatches = [];
+
+      pdfInput.addEventListener('change', async (e) => {
+        resultsArea.innerHTML = '';
+        chaptersContainer.innerHTML = '';
+        tocEl.innerHTML = '';
+        const f = e.target.files[0];
+        if (!f) return;
+        statusEl.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Parsing TOC...';
+        try {
+          const r = await uploadAndExtractTOC(f);
+          if (r.status === 'success') {
+            statusEl.innerHTML = `<div class="small text-success">Found ${r.matches?.length || 0} TOC entries across ${r.chapters_count || 0} chapters.</div>`;
+            lastMatches = r.matches || [];
+            // Build chapter groups
+            const groups = {};
+            (lastMatches || []).forEach(m => {
+              const chap = (m.subnum || '0').split('.')[0];
+              groups[chap] = groups[chap] || [];
+              groups[chap].push(m);
+            });
+            // Show chapter checkboxes
+            chaptersContainer.innerHTML = '<div class="small fw-bold mb-2">Chapters (pick for "Selected chapters only")</div>';
+            const grid = document.createElement('div'); 
+            grid.className = 'row g-2';
+            Object.keys(groups).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(chap => {
+              const col = document.createElement('div');
+              col.className = 'col-6 col-md-3';
+              const card = document.createElement('div');
+              card.className = 'p-2 border rounded small';
+              const chkId = `chap_chk_${chap}`;
+              card.innerHTML = `<div class="form-check"><input class="form-check-input chap-chk" type="checkbox" value="${chap}" id="${chkId}"><label class="form-check-label" for="${chkId}">Chapter ${chap} • ${groups[chap].length} topics</label></div>`;
+              col.appendChild(card);
+              grid.appendChild(col);
+            });
+            chaptersContainer.appendChild(grid);
+            tocEl.innerHTML = `<div class="small">Detected ${lastMatches.length} TOC entries across ${Object.keys(groups).length} chapters — Pages detected: ${r.pages ?? '-'}</div>`;
+
+            document.getElementById('generateBtn').style.display = 'inline-block';
+          } else {
+            statusEl.textContent = 'TOC parse failed: ' + (r.error || 'unknown');
+            document.getElementById('generateBtn').style.display = 'none';
+          }
+        } catch (err) {
+          statusEl.textContent = 'Error: ' + err;
+          document.getElementById('generateBtn').style.display = 'none';
+        }
+      });
+
+      ctrlWrap.addEventListener('change', (ev) => {
+        const scope = ctrlWrap.querySelector('input[name="scopeRadio"]:checked').value;
+        chaptersContainer.style.display = (scope === 'selected') ? '' : 'none';
+      });
+      chaptersContainer.style.display = 'none';
+
+      document.getElementById('generateBtn').addEventListener('click', async () => {
+        resultsArea.innerHTML = '';
+        const f = pdfInput.files[0];
+        if (!f) return alert('Choose a PDF first');
+
+        const scope = ctrlWrap.querySelector('input[name="scopeRadio"]:checked').value;
+        const selectedChapters = [];
+        if (scope === 'selected') {
+          document.querySelectorAll('.chap-chk:checked').forEach(c => selectedChapters.push(parseInt(c.value)));
+          if (!selectedChapters.length) return alert('Select at least one chapter or choose "All topics"');
+        }
+        const qType = document.getElementById('questionType').value;
+        const mcqSource = document.getElementById('mcqSource').value;
+        const numMcqs = parseInt(document.getElementById('numMcqs').value || '5', 10);
+        const numDesc = parseInt(document.getElementById('numDesc').value || '3', 10);
+
+        const btn = document.getElementById('generateBtn');
+        btn.disabled = true; 
+        btn.textContent = 'Generating…';
+
+        try {
+          const fd = new FormData();
+          fd.append("file", f, f.name);
+          fd.append("chapters", JSON.stringify(selectedChapters || []));
+          fd.append("question_type", qType);
+          fd.append("mcq_source", mcqSource);
+          fd.append("num_mcqs", String(numMcqs));
+          fd.append("num_desc", String(numDesc));
+          
+          const response = await fetch(`${backendBase}/generate_pdf_mcqs`, { method: "POST", body: fd });
+          const r = await response.json();
+          
+          if (r.status === 'success') {
+            // Update dashboard counts
+            updateDashboardFromResponse(r);
+
+            // Render results
+            const results = r.results || {};
+            const header = document.createElement('div'); 
+            header.className='mb-2';
+            header.innerHTML = `<div class="small"><b>Generated for ${Object.keys(results).length} topics</b> — MCQs: ${r.mcqCount || 0} — Descriptive: ${r.descCount || 0}</div>`;
+            resultsArea.appendChild(header);
+
+            // Downloads
+            const dlRow = document.createElement('div'); 
+            dlRow.className='mb-3';
+            const keys = r.download_keys || {};
+            
+            if (keys.docx) {
+              const a = document.createElement('a'); 
+              a.href = `${backendBase}/download/${keys.docx}`; 
+              a.className='btn btn-outline-primary btn-sm me-2';
+              a.textContent = 'Download DOCX'; 
+              dlRow.appendChild(a);
+            }
+            if (keys.excel) {
+              const a = document.createElement('a'); 
+              a.href = `${backendBase}/download/${keys.excel}`; 
+              a.className='btn btn-outline-success btn-sm me-2';
+              a.textContent = 'Download Excel'; 
+              dlRow.appendChild(a);
+            }
+            if (keys.csv) {
+              const a = document.createElement('a'); 
+              a.href = `${backendBase}/download/${keys.csv}`; 
+              a.className='btn btn-outline-secondary btn-sm me-2';
+              a.textContent = 'Download CSV'; 
+              dlRow.appendChild(a);
+            }
+
+            // Create Export to Database button
+            const exportPdfBtn = document.createElement('button');
+            exportPdfBtn.className = 'btn btn-warning btn-sm me-2';
+            exportPdfBtn.innerHTML = '📤 Export to Database';
+            exportPdfBtn.addEventListener('click', async () => {
+              exportPdfBtn.disabled = true;
+              exportPdfBtn.textContent = 'Exporting…';
+              try {
+                const payload = results;
+                const resp = await fetch(`${backendBase}/save_questions_to_db`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(payload)
+                });
+
+                const j = await resp.json().catch(() => ({status: 'error', error: 'invalid_json'}));
+                if (j.status === 'success') {
+                  alert('✅ PDF questions exported to database.');
+                } else {
+                  alert('❌ Export failed: ' + (j.error || JSON.stringify(j)));
+                }
+              } catch (err) {
+                alert('⚠ Error exporting PDF questions: ' + err);
+              } finally {
+                exportPdfBtn.disabled = false;
+                exportPdfBtn.innerHTML = '📤 Export to Database';
+              }
+            });
+            dlRow.appendChild(exportPdfBtn);
+
+            resultsArea.appendChild(dlRow);
+
+            const topicsWrap = document.createElement('div'); topicsWrap.className='accordion'; resultsArea.appendChild(topicsWrap);
+
+            const renderMCQ = (qType === 'mcq' || qType === 'both');
+            const renderDesc = (qType === 'descriptive' || qType === 'both');
+
+            Object.keys(results).forEach((topicTitle, idx) => {
+              const block = results[topicTitle];
+              const mcqs = block.mcqs || [];
+              const descrs = block.descriptive || [];
+
+              const item = document.createElement('div'); item.className='accordion-item';
+              const hId = `heading${idx}`;
+              const cId = `collapse${idx}`;
+              item.innerHTML = `
+                  <h2 class="accordion-header" id="${hId}">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${cId}" aria-expanded="false" aria-controls="${cId}">
+                          ${topicTitle} <small class="text-muted ms-2"> (MCQs: ${mcqs.length} • Descr: ${descrs.length})</small>
+                      </button>
+                  </h2>
+                  <div id="${cId}" class="accordion-collapse collapse" aria-labelledby="${hId}">
+                      <div class="accordion-body">
+                          <div class="result-content"></div>
+                      </div>
+                  </div>
+              `;
+              topicsWrap.appendChild(item);
+
+              const contentDiv = item.querySelector('.result-content');
+
+              if (renderMCQ && mcqs && mcqs.length) {
+                const mcqTitle = document.createElement('div'); mcqTitle.className='mb-2';
+                mcqTitle.innerHTML = `<b>Multiple Choice Questions</b>`;
+                contentDiv.appendChild(mcqTitle);
+                mcqs.forEach((m, mi) => {
+                  const qDiv = document.createElement('div'); qDiv.className = 'mb-2';
+                  const qtext = m.question || `Q${mi+1}.`;
+                  const difficulty = m.difficulty || 'N/A';
+                  qDiv.innerHTML = `<div><strong>${mi+1}. ${qtext}</strong> <small class="text-muted"> — Level ${difficulty}</small></div>`;
+                  const ul = document.createElement('ul'); ul.className='small';
+                  (m.options || []).forEach(opt => {
+                    const li = document.createElement('li'); li.textContent = opt;
+                    ul.appendChild(li);
+                  });
+                  qDiv.appendChild(ul);
+                  if (m.answer) {
+                    const ans = document.createElement('div'); ans.className='text-success small'; ans.textContent = `✅ Answer: ${m.answer}`;
+                    qDiv.appendChild(ans);
+                  }
+                  contentDiv.appendChild(qDiv);
+                });
+              }
+
+              if (renderDesc && descrs && descrs.length) {
+                const descTitle = document.createElement('div'); descTitle.className='mt-3 mb-2';
+                descTitle.innerHTML = `<b>Descriptive / Short-answer Questions</b>`;
+                contentDiv.appendChild(descTitle);
+                descrs.forEach((d, di) => {
+                  const dDiv = document.createElement('div'); dDiv.className='mb-2';
+                  const q = typeof d === 'string' ? d : (d.question || '');
+                  const a = (typeof d === 'object' ? (d.answer || '') : '');
+                  const diff = (typeof d === 'object' ? (d.difficulty || 'N/A') : 'N/A');
+                  dDiv.innerHTML = `<div>${di+1}. ${q} <small class="text-muted"> — Level ${diff}</small></div>`;
+                  if (a) {
+                    const ans = document.createElement('div'); ans.className='text-success small'; ans.textContent = `✅ Answer: ${a}`;
+                    dDiv.appendChild(ans);
+                  }
+                  contentDiv.appendChild(dDiv);
+                });
+              }
+            });
+             function setFilter(mode) {
+              Array.from(resultsArea.querySelectorAll('.result-content')).forEach(rc=>{
+                if (mode === 'mcq') {
+                  rc.querySelectorAll('div').forEach(div=>{
+                    const txt = div.innerText || '';
+                    if (txt.includes('Descriptive / Short-answer Questions')) div.style.display = 'none';
+                    if (txt.includes('Multiple Choice Questions')) div.style.display = '';
+                    if (!txt.includes('Descriptive / Short-answer Questions') && !txt.includes('Multiple Choice Questions')) div.style.display = '';
+                  });
+                } else if (mode === 'des') {
+                  rc.querySelectorAll('div').forEach(div=>{
+                    const txt = div.innerText || '';
+                    if (txt.includes('Multiple Choice Questions')) div.style.display = 'none';
+                    if (txt.includes('Descriptive / Short-answer Questions')) div.style.display = '';
+                    if (!txt.includes('Descriptive / Short-answer Questions') && !txt.includes('Multiple Choice Questions')) div.style.display = '';
+                  });
+                } else {
+                  rc.querySelectorAll('div').forEach(div=>div.style.display = '');
+                }
+              });
+            }
+            if (qType === 'mcq') setFilter('mcq');
+            else if (qType === 'descriptive') setFilter('des');
+            else setFilter('both');
+
+          } else {
+            alert('Generation failed: ' + (r.error || 'unknown'));
+          }
+        } catch (err) {
+          alert('Error: ' + err);
+        } finally {
+          btn.disabled = false; 
+          btn.textContent = 'Generate MCQs';
+        }
+      });
+    })();
+  </script>
+
+  <!-- === FULL VIDEO LOGIC (from original) === -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // note: uses shared backendBase variable defined earlier
+      const statNodes = Array.from(document.querySelectorAll('#videoPage .stats-card h3') || []);
+
+      function updateDashboardFromResponse(resp) {
+        try {
+          if (!resp) return;
+          if (statNodes[0]) statNodes[0].textContent = (resp.global_state?.pdf_uploads ?? statNodes[0].textContent);
+          if (statNodes[1]) statNodes[1].textContent = (resp.pages ?? statNodes[1].textContent);
+          if (statNodes[2]) statNodes[2].textContent = (typeof resp.mcqCount === 'number') ? resp.mcqCount : statNodes[2].textContent;
+          if (statNodes[3]) statNodes[3].textContent = (typeof resp.descCount === 'number') ? resp.descCount : statNodes[3].textContent;
+        } catch (e) { console.warn("updateDashboardFromResponse failed", e); }
+      }
+
+      async function transcribeVideo(file, whisper_model="small") {
+        const fd = new FormData();
+        fd.append("file", file, file.name);
+        fd.append("whisper_model", whisper_model);
+        const r = await fetch(`${backendBase}/transcribe_video`, { method: "POST", body: fd });
+        const json = await r.json().catch(()=>({status:"error", error:"invalid_json_response"}));
+        return json;
+      }
+
+      async function generateVideoMCQs({file=null, summary="", questionType="both", numQs=10}) {
+        const fd = new FormData();
+        if (file) fd.append("file", file, file.name);
+        fd.append("summary", summary || "");
+        fd.append("question_type", questionType);
+        fd.append("num_qs", String(numQs));
+        const r = await fetch(`${backendBase}/generate_video_mcqs`, { method: "POST", body: fd });
+        const json = await r.json().catch(()=>({status:"error", error:"invalid_json_response"}));
+        return json;
+      }
+
+      // Find the video input (inside Video page)
+      const videoInput = document.querySelector('#videoPage #videoUploader');
+      if (!videoInput) {
+        console.warn("No video input found in #videoPage");
+        return;
+      }
+
+      const videoBox = videoInput.closest('.upload-box') || document.body;
+
+      // build controls
+      const ctrl = document.createElement('div'); ctrl.className = 'mt-3';
+      const transBtn = document.createElement('button'); transBtn.className = 'btn btn-outline-primary btn-sm me-2';
+      transBtn.textContent = 'Transcribe';
+      transBtn.disabled = true;
+
+      const genBtn = document.createElement('button'); genBtn.className = 'btn btn-primary btn-sm';
+      genBtn.textContent = 'Generate MCQs';
+      genBtn.disabled = true;
+
+      ctrl.appendChild(transBtn); ctrl.appendChild(genBtn);
+      videoBox.appendChild(ctrl);
+
+      const status = document.createElement('div'); status.className = 'mt-2 small'; status.style.whiteSpace = 'pre-wrap';
+      videoBox.appendChild(status);
+
+      const transcriptArea = document.createElement('textarea'); transcriptArea.className='form-control mt-2';
+      transcriptArea.rows = 8; transcriptArea.placeholder = 'Transcript will appear here (or paste one)...';
+      videoBox.appendChild(transcriptArea);
+
+      const summaryDiv = document.createElement('div'); summaryDiv.className='mt-2';
+      videoBox.appendChild(summaryDiv);
+
+      const chunksDiv = document.createElement('div'); chunksDiv.className='mt-2 small text-muted';
+      videoBox.appendChild(chunksDiv);
+
+      const opts = document.createElement('div'); opts.className='mt-2';
+      opts.innerHTML = `
+        <div class="row g-2 align-items-center">
+          <div class="col-auto">
+            <label class="form-label mb-0 small">Question type</label>
+            <select id="videoQuestionType" class="form-select form-select-sm">
+              <option value="mcq">MCQs</option>
+              <option value="descriptive">Descriptive</option>
+              <option value="both" selected>Both</option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="form-label mb-0 small">Number of MCQs</label>
+            <input id="videoNumQs" class="form-control form-control-sm" value="10" />
+          </div>
+        </div>
+      `;
+      videoBox.appendChild(opts);
+
+      const resultsWrap = document.createElement('div'); resultsWrap.className='mt-3';
+      videoBox.appendChild(resultsWrap);
+
+      // enable buttons when user selects a file
+      videoInput.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) {
+          transBtn.disabled = false;
+          genBtn.disabled = false;
+          status.textContent = `Selected file: ${f.name} (${Math.round(f.size/1024)} KB)`;
+          console.log("Video selected", f);
+        } else {
+          transBtn.disabled = true;
+          genBtn.disabled = true;
+        }
+      });
+
+      // Transcribe button
+      transBtn.addEventListener('click', async () => {
+        const f = videoInput.files && videoInput.files[0];
+        if (!f) return alert('Choose a video file first.');
+        status.textContent = 'Transcribing... (may take minutes)';
+        transBtn.disabled = true; genBtn.disabled = true;
+        try {
+          const r = await transcribeVideo(f, "small");
+          if (r.status === 'success') {
+            status.textContent = 'Transcription complete.';
+            transcriptArea.value = r.transcript || '';
+            summaryDiv.innerHTML = `<b>Summary</b><div class="small mt-1">${(r.summary || '').replace(/\n/g,'<br>')}</div>`;
+            if (r.chunks && r.chunks.length) {
+              chunksDiv.innerHTML = '<b>Chunk summaries:</b><br>' + r.chunks.slice(0,10).map((c,i)=>`<div>● Chunk ${i+1}: ${c}</div>`).join('');
+            } else chunksDiv.innerHTML = '';
+            genBtn.disabled = false;
+            if (r.global_state) updateDashboardFromResponse(r);
+          } else {
+            status.textContent = 'Transcription error: ' + (r.error || 'unknown');
+            console.warn("transcribe error", r);
+          }
+        } catch (err) {
+          status.textContent = 'Network / JS error during transcription: ' + err;
+          console.error(err);
+        } finally {
+          transBtn.disabled = false;
+        }
+      });
+
+      // Generate button
+      genBtn.addEventListener('click', async () => {
+        const f = videoInput.files && videoInput.files[0];
+        const qType = document.getElementById('videoQuestionType').value;
+        const numQs = parseInt(document.getElementById('videoNumQs').value || '10', 10);
+        resultsWrap.innerHTML = '';
+        status.textContent = 'Generating questions...';
+        genBtn.disabled = true; transBtn.disabled = true;
+        try {
+          const curSummary = summaryDiv.innerText.trim() ? summaryDiv.innerText.trim() : (transcriptArea.value.trim() ? "" : "");
+          let response;
+          if (curSummary) {
+            response = await generateVideoMCQs({ file: null, summary: curSummary, questionType: qType, numQs: numQs });
+          } else {
+            if (!f) return alert('No file selected and no summary available.');
+            response = await generateVideoMCQs({ file: f, summary: "", questionType: qType, numQs: numQs });
+          }
+          if (response.status === 'success') {
+            status.textContent = `Generated — MCQs: ${response.mcqCount || 0} • Descriptive: ${response.descCount || 0}`;
+            updateDashboardFromResponse(response);
+
+            // downloads
+            const keys = response.download_keys || {};
+            const dlRow = document.createElement('div'); dlRow.className = 'mb-2';
+            if (keys.docx) {
+              const a = document.createElement('a'); a.href = `${backendBase}/download/${keys.docx}`; a.className='btn btn-outline-primary btn-sm me-2'; a.textContent='Download DOCX';
+              dlRow.appendChild(a);
+            }
+            if (keys.excel) {
+              const a = document.createElement('a'); a.href = `${backendBase}/download/${keys.excel}`; a.className='btn btn-outline-success btn-sm me-2'; a.textContent='Download Excel';
+              dlRow.appendChild(a);
+            }
+            if (keys.csv) {
+              const a = document.createElement('a'); a.href = `${backendBase}/download/${keys.csv}`; a.className='btn btn-outline-secondary btn-sm me-2'; a.textContent='Download CSV';
+              dlRow.appendChild(a);
+            }
+
+            resultsWrap.appendChild(dlRow);
+
+            // render results per topic
+            const res = response.results || {};
+            for (const topic of Object.keys(res)) {
+              const block = res[topic];
+              if (block.mcqs && block.mcqs.length) {
+                const h = document.createElement('div'); h.className='mt-2'; h.innerHTML = `<b>MCQs</b>`;
+                resultsWrap.appendChild(h);
+                block.mcqs.forEach((m,i) => {
+                  const div = document.createElement('div'); div.className='mb-2';
+                  div.innerHTML = `<div><strong>${i+1}. ${m.question}</strong></div>`;
+                  const ul = document.createElement('ul'); ul.className='small';
+                  (m.options || []).forEach(opt => { const li = document.createElement('li'); li.textContent = opt; ul.appendChild(li); });
+                  div.appendChild(ul);
+                  if (m.answer) { const a = document.createElement('div'); a.className='text-success small'; a.textContent = `✅ Answer: ${m.answer}`; div.appendChild(a); }
+                  resultsWrap.appendChild(div);
+                });
+              }
+              if (block.descriptive && block.descriptive.length) {
+                const h = document.createElement('div'); h.className='mt-3'; h.innerHTML = `<b>Descriptive</b>`;
+                resultsWrap.appendChild(h);
+                block.descriptive.forEach((d,i) => {
+                  const div = document.createElement('div'); div.className='mb-2';
+                  const q = (typeof d === 'object') ? d.question : d;
+                  const a = (typeof d === 'object') ? d.answer : '';
+                  const diff = (typeof d === 'object') ? d.difficulty : 'N/A';
+                  div.innerHTML = `<div>${i+1}. ${q} <small class="text-muted"> — Level ${diff}</small></div>`;
+                  if (a) { const an = document.createElement('div'); an.className='text-success small'; an.textContent = `✅ Answer: ${a}`; div.appendChild(an); }
+                  resultsWrap.appendChild(div);
+                });
+              }
+            }
+          } else {
+            status.textContent = 'Generation error: ' + (response.error || 'unknown');
+            console.warn("generation error", response);
+          }
+        } catch (err) {
+          console.error("generate exception", err);
+          status.textContent = 'Network / JS error during generation: ' + err;
+        } finally {
+          genBtn.disabled = false; transBtn.disabled = false;
+        }
+      });
+
+    }); // DOMContentLoaded
+  </script>
+
+  <!-- NAV & HISTORY HANDLING (Back button -> main page) -->
+  <script>
+    (function setupNavHistory(){
+      const mainPage = document.getElementById('mainPage');
+      const pages = Array.from(document.querySelectorAll('.page'));
+      function showPageById(id) {
+        // hide all pages & main
+        pages.forEach(p => p.style.display = 'none');
+        mainPage.style.display = 'none';
+        // show requested
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+      }
+
+      // add click handlers for nav buttons
+      document.querySelectorAll('.nav-vertical .btn').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          const pageId = btn.getAttribute('data-page');
+          if (!pageId) return;
+          showPageById(pageId);
+          // push state so back button works
+          history.pushState({page: pageId}, "", "#" + pageId);
+        });
+      });
+
+      // handle popstate (back/forward)
+      window.addEventListener('popstate', (e) => {
+        if (e.state && e.state.page) {
+          showPageById(e.state.page);
+        } else {
+          // go home
+          pages.forEach(p => p.style.display = 'none');
+          mainPage.style.display = 'flex';
+        }
+      });
+
+      // initial load: if hash present, open that page (and push state)
+      const initialHash = window.location.hash && window.location.hash.replace('#','');
+      if (initialHash && document.getElementById(initialHash)) {
+        // show target and replace history state
+        showPageById(initialHash);
+        history.replaceState({page: initialHash}, "", "#" + initialHash);
+      } else {
+        // show main page
+        pages.forEach(p => p.style.display = 'none');
+        mainPage.style.display = 'flex';
+        history.replaceState({}, "", window.location.pathname);
+      }
+    })();
+  </script>
+</body>
+</html>
